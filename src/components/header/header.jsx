@@ -1,48 +1,65 @@
-import { Alert, AppBar, Box, Button, Toolbar, Typography } from '@mui/material';
-import { useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useContext, useEffect } from 'react';
+import { AppBar, Toolbar, Typography, Select, MenuItem, IconButton, Grid } from '@mui/material';
 import { Container } from '../';
-import { ROUTES } from '../../configs/routes';
+import { LocaleContext } from '../../contexts';
+import { appLanguages } from '../../utils';
+import HomeIcon from '@mui/icons-material/Home';
+import { useHistory } from "react-router-dom";
+import { SingleCountry } from '../../components';
 
 const Header = () => {
-  useEffect(() => {
-    console.log('ROUTES: ', ROUTES.MAIN_ROUTES);
-  }, [])
+  const { locale, setLocale } = useContext(LocaleContext);
+  const languages = appLanguages;
+  const history = useHistory();
+  const country = history.location.state?.country
+
+  // Set locale and reload to update context
+  const changeLocale = (event) => {
+    setLocale(event.target.value);
+    window.location = window.location;
+  }
+
+  const home = () => {
+    history.push({pathname: '/app/countries'})
+  }
+
 
     return(
         <>
           <AppBar position={'sticky'} color={'primary'}>
             <Container>
               <Toolbar>
-                <div className="nav-links">
-                  <Typography color={'whitesmoke'}>
-                    {ROUTES.MAIN_ROUTES.map((route) => (
-                      <NavLink
-                        key={route.path}
-                        activeClassName={'active'}
-                        to={route.path}
-                        sx={{ m: 2, color: 'white' }}
-                        className={'nav-link'}
-                      >
-                        {route.label}
-                      </NavLink>
-                    ))}
-                  </Typography>
-                  {/* <Button
-                    className={'nav-link auth-link'}
-                    variant="contained"
-                    onClick={logout}
-                  >
-                    LOGOUT
-                  </Button> */}
-                </div>
+                <Grid container spacing={10} justifyContent='space-between'>
+                  <Grid item xs={1}>
+                    <IconButton aria-label='home' size='large' onClick={() => {home()}}>
+                      <HomeIcon color='white'/>
+                    </IconButton>
+                  </Grid>
+                  <Grid item xs={9} sm={6} md={3}>
+                        <Select
+                          variant='standard'
+                          sx={{color: 'white', maxHeight: 40}}
+                          fullWidth
+                          value={localStorage.getItem('locale') || navigator.language.substring(0,2)}
+                          onChange={changeLocale}
+                        >
+                          {Object.keys(languages).map((key, index) => {
+                              return (
+                                <MenuItem key={index} value={key}>
+                                  <Typography variant="overline" gutterBottom mr={1} ml={1}>
+                                    {languages[key]?.english},
+                                  </Typography>
+                                  <Typography variant='caption' gutterBottom>
+                                    {languages[key]?.native}
+                                  </Typography>
+                                </MenuItem>
+                              )
+                          })}
+                        </Select>
+                  </Grid>
+                </Grid>
               </Toolbar>
-  
-              {/* {error && (
-                <Box>
-                  <Alert severity={'error'}>{error.message}</Alert>
-                </Box>
-              )} */}
+              {country && <SingleCountry country={country} />}
             </Container>
           </AppBar>
       </>

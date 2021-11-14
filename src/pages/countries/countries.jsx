@@ -1,147 +1,141 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Autocomplete, TextField, Box, Paper, Popper } from "@mui/material";
+import React, { useEffect, useState, useContext, useMemo } from "react";
+import { Autocomplete, TextField, Popper, Grid, Typography, CircularProgress } from "@mui/material";
+import { useHistory } from "react-router-dom";
 import { makeStyles, createStyles } from "@mui/styles";
-import { Container, SingleCountry, Flag } from '../../components'
+import { Flag } from '../../components'
 import useFetch from 'use-http';
+import './countries.scss';
+import { LocaleContext } from "../../contexts";
 
 
 
 const Countries = () => {
 
-    const useStyles = makeStyles((theme) =>
+    // Custom styles for autocomplete
+    const useStyles = makeStyles(() =>
         createStyles({
             root: {
-            "& .MuiAutocomplete-listbox": {
-                borderBottom: '2px solid gray',
-                // border: 'bottom',
-                // height: '100vh',
-                minHeight: '80vh',
-                color: "black",
-                fontSize: 18,
-                "& :hover": {
-                color: "red"
-                },
-                "& ul": {
-                //list item specific styling
-                textAlign: 'center',
-                borderBottom: '1px solid gray',
-                borderRadius: 2
+                "& .MuiAutocomplete-listbox": {
+                    borderBottom: '2px solid grey',
+                    borderTop: '2px solid grey',
+                    minHeight: '80vh',
+                    color: "black",
+                    fontSize: 18,
+                    "& :hover": {
+                    color: "red"
+                    },
                 }
-            }
             },
             textfield: {
-            "& .MuiInputBase-input.MuiAutocomplete-input": {
-                color: "blue",
-                fontSize: 18,
-                textAlign: 'center',
-                borderBottom: '2px solid gray',
-            },
-            "& #custom-autocomplete-label": {
-                //or could be targeted through a class
-                color: "brown",
-                textAlign: 'center',
-            },
-            "& .MuiButtonBase-root.MuiAutocomplete-clearIndicator": {
-                color: "blue"
-            }
+                "& .MuiInputBase-input.MuiAutocomplete-input": {
+                    color: "black",
+                    fontSize: 18,
+                    textAlign: 'center',
+                },
             }
         })
     );
 
     const classes = useStyles();
     const heroku = 'https://pure-earth-30421.herokuapp.com/'
-    const countriesBaseUrl = heroku + 'http://country.io/';
-    const [countries, setCountries] = useState([]);
-    const { get, post, response, loading, error } = useFetch(countriesBaseUrl);
-    const countryRef = useRef();
-    const [filter, setFilter] = useState('')
+    const holidayAPIKey = '9c50fecb-c3bd-4210-b92d-7492551bfaf6'; 
+    const holidayBaseUrl = heroku + 'https://holidayapi.com/v1/';
+    const [countries, setCountries] = useState(JSON.parse(window.sessionStorage.getItem('countries')) || []); 
+    const { get, post, response, loading, error } = useFetch(holidayBaseUrl);
+    const history = useHistory();
+    const { locale, setLocale } = useContext(LocaleContext);
+    
+    // Initializing array of translated countrynames after locale change
+    const translatedCountries = require('i18n-iso-countries');
+    translatedCountries.registerLocale(require(`i18n-iso-countries/langs/${locale?.code.substring(0,2)}.json`))
+    const countryNames = useMemo(()=>{
+        return translatedCountries.getNames(locale?.code.substring(0,2), {select: 'official'});
+    }, [locale])
 
+    // Fetch countries on mount
     useEffect(() => {
         fetchCountries();
     },[]);
 
-    // useEffect(()=> {
-    //     CountriesList();
-    // }, [filter])
-
+    // Fetch countries from API
     const fetchCountries = async () => {
-        const countriesJSON = await get('names.json');
-        if (response.ok) {
-            console.log('JSON: ', typeof countriesJSON, countriesJSON);
-            const initialCountries = Object.entries(countriesJSON)
-            console.log(typeof initialCountries);
-            console.log(initialCountries);
-            setCountries(initialCountries);
-        }
+        if (!window.sessionStorage.getItem('countries')) {
+            await get(`countries?key=${holidayAPIKey}`);
+            if (response.ok) {
+                setCountries(response.data.countries);
+                window.sessionStorage.setItem('countries', JSON.stringify(response.data.countries))
+            }
+        } else {
+            return;
+        };
     }
 
-    const countryClicked = (country) => {
-        console.log(country[1])
-    }
-
-    const updateFilter = () => {
-        setFilter(countryRef.current.value);
-        // console.log('FILTER: ', filter)
-    }
-
-    // const CountriesList = () => {
-    //     let filteredCountries = countries.filter((country) => country[1].startsWith(filter))
-    //     console.log(filteredCountries);
-    //     filteredCountries.map((country, index) => {
-    //         return (
-    //             <SingleCountry key={index} selected={() => countryClicked(country)} country={country} filter={filter}/>
-    //         )
-    //     })
-    // }
-
-    const CustomPopper = function (props) {
+    // Custom listbox for autocomplete
+    const CustomPopper = (props) => {
         const classes = useStyles();
         return <Popper {...props} className={classes.root} placement="bottom" />;
     };
 
+    // Redirect to holidays page after selecting country
+    const countrySelect = (value) => {
+        let path = '/app/holidays/' + value.code;
+        history.push({pathname: path, state: {country: value}})
+    }
+
     return(
         <>
-            
-            {/* <TextField 
-                fullWidth
-                inputRef={countryRef}
-                onChange={updateFilter}
-            /> */}
-            <Autocomplete
-                // sx={{max-height: 1000px}}
-                open='true'
-                id="country-select-demo"
-                fullWidth
-                options={countries}
-                autoHighlight
-                // PaperComponent={CustomPaper}
-                PopperComponent={CustomPopper}
-                getOptionLabel={(option) => option[1]}
-                renderOption={(props, option) => (
-                    // <SingleCountry selected={() => countryClicked(option)} country={option} filter={filter} {...props}/>
-                    <Box component="ul" sx={{ '& > img': { mr: 2, flexShrink: 0 } }} {...props}>
-                            {/* <SingleCountry selected={() => countryClicked(option)} country={option} filter={filter}/> */}
-                            <Flag code={option[0]}/>
-                            {option[1]}
-                    </Box>
-                )}
-                renderInput={(params) => (
-                    <TextField
-                    {...params}
-                    label="Choose a country"
-                    inputProps={{
-                        ...params.inputProps,
-                        autoComplete: 'new-password', // disable autocomplete and autofill
-                    }}
-                    className={classes.textfield}
-                    />
-                )}
+            {error && <>
+                <Typography variant='h3'>We have encountered an error:</Typography>
+                <Typography variant='h4'>{error.message}</Typography>
+                <Typography variant='h5'>Please try again later</Typography>
+            </>}
+            {loading && <Grid container justifyContent='center' alignItems='center' sx={{height: '80vh'}}>
+                <CircularProgress size={150}/>
+            </Grid>}     
+            {(!error && !loading) && <Grid container justifyContent='center' mt={2}>
+                <Autocomplete
+                    open
+                    sx={{ maxWidth:800}}
+                    id="country-select"
+                    fullWidth
+                    options={countries}
+                    onChange={(event, newValue) => countrySelect(newValue)}
+                    autoHighlight
+                    PopperComponent={CustomPopper}
+                    getOptionLabel={(option) => countryNames[option.code] || 'N/A'}
+                    renderOption={(props, option) => (
+                        <Grid 
+                            container spacing={0} 
+                            onClick={() => {countrySelect(option)}} 
+                            justifyContent='space-between'
+                            mt={{xs: 3, md: 1}} 
+                            sx={{backgroundColor: 'whitesmoke', cursor: 'pointer'}}
+                        >
+                                <Grid item xs={1}>
+                                    <Flag code={option.code} width={20} />
+                                </Grid>
+                                <Grid item xs={9}>
+                                    {countryNames[option.code]}
+                                </Grid>
+                                <Grid item xs={2} md={1}>
+                                    {option.codes?.['alpha-3'] || 'N/A'}
+                                </Grid>
+                        </Grid>
+                    )}
+                    renderInput={(params) => (
+                        <TextField
+                        {...params}
+                        label="Choose a country"
+                        inputProps={{
+                            ...params.inputProps,
+                            autoComplete: 'new-password',
+                        }}
+                        className={classes.textfield}
+                        />
+                    
+                    )}
                 />
-            {/* {countries.map((country, index) => {
-                    return (
-                        <SingleCountry key={index} selected={() => countryClicked(country)} country={country} filter={filter}/>
-                    )
-            })} */}
+            </Grid>}
         </>
     )
 }
