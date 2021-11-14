@@ -1,5 +1,5 @@
 import React from 'react';
-import { WIP, Countries, Shell } from "../pages";
+import { WIP, Countries, Shell, Calendar } from "../pages";
 
 export const ROUTES = {
     MAIN_ROUTES: [
@@ -9,9 +9,9 @@ export const ROUTES = {
             component: Countries,
         }, 
         {
-            path: '/app/holidays',
+            path: '/app/holidays/:countryName',
             label: 'HOLIDAYS',
-            component: WIP
+            component: Calendar
 
         }
     ],

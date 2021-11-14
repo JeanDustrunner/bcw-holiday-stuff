@@ -6,9 +6,7 @@ import { Header, Container } from '../../components';
 const Shell = () => {
     let { path, url } = useRouteMatch();
     useEffect(() => {
-      console.log(typeof ROUTES.MAIN_ROUTES);
       console.log('shell', url);
-
     }, []);
     return (
       <>
