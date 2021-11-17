@@ -104,7 +104,8 @@ const Countries = () => {
                     PopperComponent={CustomPopper}
                     getOptionLabel={(option) => countryNames[option.code] || 'N/A'}
                     renderOption={(props, option) => (
-                        <Grid 
+                        <Grid
+                            key={option.code}
                             container spacing={0} 
                             onClick={() => {countrySelect(option)}} 
                             justifyContent='space-between'
