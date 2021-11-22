@@ -19,7 +19,6 @@ export const Calendar = () => {
         ...(isPublicHoliday && {
             borderRadius: '50%',
             color: 'red',
-            // color: theme.palette.common.white,
             '&:hover, &:focus': {
                 backgroundColor: 'pink',
             },
@@ -27,7 +26,6 @@ export const Calendar = () => {
         ...(isNonPublicHoliday && {
             borderRadius: '50%',
             color: 'blue',
-            // color: theme.palette.common.white,
             '&:hover, &:focus': {
                 backgroundColor: 'violet',
             },
@@ -61,7 +59,8 @@ export const Calendar = () => {
     const holidayBaseUrl = heroku + 'https://holidayapi.com/v1/';
 
     const { get, response, loading, error } = useFetch(holidayBaseUrl, options);
-    const { get: wdGet, response: wdResponse, loading: wdLoading } = useFetch(holidayBaseUrl)
+    const { get: wdGet, response: wdResponse, loading: wdLoading } = useFetch(holidayBaseUrl);
+    const { get: cGet, response: cResponse, loading: cLoading } = useFetch(holidayBaseUrl);
     
     const publicRef = useRef()
     
@@ -86,22 +85,33 @@ export const Calendar = () => {
     useEffect(() => {
         if(!country) {
             fetchFromPathname();
-        }        
+        }     
     }, [])
 
     const fetchFromPathname = async () => {
-        if (!country) {
-            let tempCode = history.location.pathname.slice(-2);
-            console.log('COUNTRY: ', tempCode)
-            await get(`countries?key=${holidayAPIKey}&country=${tempCode}`);
-            if (response.ok) {
-                history.push({pathname: history.location.pathname, state: {country: response.data.countries[0]}})
-                window.location=window.location;
-            } else {
+            if (!window.sessionStorage.getItem('countries')) {
+                await cGet(`countries?key=${holidayAPIKey}`);
+                if (cResponse.ok) {
+                    window.sessionStorage.setItem('countries', JSON.stringify(cResponse.data.countries))
+                }
             }
-        } else {
-            return;
-        }
+            let tempCountries = JSON.parse(window.sessionStorage.getItem('countries'));
+            let tempCode = history.location.pathname.slice(-2).toUpperCase();
+            let isCodeCorrect = false;
+            for (let i=0; i < tempCountries.length; i++) {
+                if ( tempCountries[i].code === tempCode) {
+                    isCodeCorrect = true;
+                }
+            }
+            if (isCodeCorrect) {
+                await get(`countries?key=${holidayAPIKey}&country=${tempCode}`);
+                if (response.ok) {
+                    history.push({pathname: history.location.pathname, state: {country: response.data.countries[0]}})
+                    window.location=window.location;
+                }
+            } else {
+                history.push({pathname: '/app/countries'})
+            }           
     }
 
     // Fetch the next workday date
@@ -116,12 +126,16 @@ export const Calendar = () => {
     }
     
     // Check if given day is a member of a holidays object
-    const oneOfDays = (day, days) => {
-        for (let i = 0; i < days.length; i++) {
-            if (isSameDay(day, days[i].date)) {
-                return {is: true, day: days[i]};
+    const oneOfDays = (day, holidays) => {
+        let is = false;
+        let days = [];
+        for (let i = 0; i < holidays.length; i++) {
+            if (isSameDay(day, holidays[i].date)) {
+                is = true;
+                days.push(holidays[i]);
             }
         }
+        return {is: is, days: days};
     }
 
     // Custom classes for calendar widget
@@ -138,7 +152,7 @@ export const Calendar = () => {
                 <CustomPickersDay
                     {...pickersDayProps}
                     isPublicHoliday={isPublicHoliday?.is}
-                    isNonPublicHoliday={isNonPublicHoliday?.is && !onlyPublic}
+                    isNonPublicHoliday={isNonPublicHoliday?.is && !onlyPublic && !isPublicHoliday?.is}
                 />
         )
     }
@@ -147,7 +161,7 @@ export const Calendar = () => {
     useEffect(()=>{
         if (country) {
             // I'm using a year 2020 since it's the only one I have access to with a free acc
-            const params = `?key=${holidayAPIKey}&country=${code}&year=2020&language=${locale?.code}`
+            const params = `?key=${holidayAPIKey}&country=${code}&year=2020&language=${locale?.code.substring(0,2)}`
             fetchHolidays(params);
         }
     },[country])
@@ -207,11 +221,11 @@ export const Calendar = () => {
 
     return (
         <>
-            {error && <>
+            {error ? <>
                 <Typography variant='h3'>We have encountered an error:</Typography>
                 <Typography variant='h4'>{error.message}</Typography>
                 <Typography variant='h5'>Please try again later</Typography>
-            </>}
+            </> : 
             <Grid container spacing={2}>
                 <Grid item xs={12}>
                     <HolidayDetails
@@ -220,7 +234,8 @@ export const Calendar = () => {
                         workday={workday} 
                         langs={langs} 
                         native={holidaysNative} 
-                        loading={wdLoading} 
+                        loading={wdLoading}
+                        flagCode={code}
                     />
                 </Grid>
                 <Grid item xs={12}>
@@ -256,7 +271,7 @@ export const Calendar = () => {
                         Check out all the holidays in {name} for {getYear(date)} <a href={apiLink}>here</a>.
                     </Box>
                 </Grid>
-            </Grid>
+            </Grid>}
             
             
             

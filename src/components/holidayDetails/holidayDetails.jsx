@@ -4,7 +4,8 @@ import { LocaleContext } from '../../contexts';
 import { format, isSameDay, parseISO } from 'date-fns';
 
 
-export const HolidayDetails = ({date, holiday, workday, native, loading}) => {
+export const HolidayDetails = ({date, holiday, workday, native, loading, flagCode}) => {
+
     const {locale, setLocale} = useContext(LocaleContext)
     const [chipColor, setChipColor] = useState('default')
     const [chipLabel, setChipLabel] = useState(<CircularProgress color='inherit' size={30} />)
@@ -26,12 +27,16 @@ export const HolidayDetails = ({date, holiday, workday, native, loading}) => {
 
     
     
-    const oneOfDays = (day, days) => {
-        for (let i = 0; i < days.length; i++) {
-            if (isSameDay(day, parseISO(days[i].date))) {
-                return {is: true, day: days[i]};
+    const oneOfDays = (day, holidays) => {
+        let is = false;
+        let days = [];
+        for (let i = 0; i < holidays.length; i++) {
+            if (isSameDay(day, parseISO(holidays[i].date))) {
+                is = true;
+                days.push(holidays[i]);
             }
         }
+        return {is: is, days: days};
     }
 
     return (
@@ -49,20 +54,31 @@ export const HolidayDetails = ({date, holiday, workday, native, loading}) => {
                     />
                 </Grid>
                 <Grid item xs={9} justifyContent='flex-end'>
-                    <Typography variant='h4' gutterBottom>
-                        {holiday?.day.name && `${holiday?.day.name}`}
-                    </Typography>
-                    {native && <Typography variant='subtitle2' display='block' gutterBottom mr={1}>                                     
-                        {native.map((lang, index) => {
-                            if (Object.keys(lang)[0] === locale?.code) {
-                                return false;
-                            }
-                            const nativeHoliday = oneOfDays(date, Object.values(lang)[0])                                            
-                            return (  
-                                <Box component='span' key={index}>{nativeHoliday?.day.name}</Box>
-                            )
-                        })}
-                    </Typography>} 
+                    {holiday.days.map((day, index) => {
+                        return (
+                            <Box component='div' key={index}>
+                                {day.public ? <Typography variant='h4' gutterBottom sx={{color: 'red'}}>
+                                    {day.name && `${day.name}`}                                    
+                                </Typography> :
+                                <Typography variant='h4' gutterBottom>
+                                    {day.name && `${day.name}`}                                    
+                                </Typography>}
+                                {native && <Typography variant='subtitle2' display='block' gutterBottom mr={1}>                                     
+                                    {native.map((lang, index0) => {
+                                        if (Object.keys(lang)[0] === locale?.code) {
+                                            return false;
+                                        }
+                                        const nativeHoliday = oneOfDays(date, Object.values(lang)[0])                                        
+                                        return (  
+                                            <Box component='span' key={index0}>{nativeHoliday?.days[index]?.name}</Box>
+                                        )
+                                    })}
+                                </Typography>} 
+                            </Box>
+                        )
+                        
+                    })}
+                    
                 </Grid>                
             </Grid>
         </>

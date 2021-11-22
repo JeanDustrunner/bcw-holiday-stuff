@@ -13,6 +13,11 @@ export const ROUTES = {
             label: 'HOLIDAYS',
             component: Calendar
 
+        },
+        {
+            path: '/app/holidays',
+            label: 'HOLIDAYS NO COUNTRY',
+            component: Calendar
         }
     ],
     APP: {
