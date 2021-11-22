@@ -84,15 +84,15 @@ const Countries = () => {
 
     return(
         <>
-            {error && <>
+            {error ? <>
                 <Typography variant='h3'>We have encountered an error:</Typography>
                 <Typography variant='h4'>{error.message}</Typography>
                 <Typography variant='h5'>Please try again later</Typography>
-            </>}
-            {loading && <Grid container justifyContent='center' alignItems='center' sx={{height: '80vh'}}>
+            </> :
+            loading ? <Grid container justifyContent='center' alignItems='center' sx={{height: '80vh'}}>
                 <CircularProgress size={150}/>
-            </Grid>}     
-            {(!error && !loading) && <Grid container justifyContent='center' mt={2}>
+            </Grid>  :
+            <Grid container justifyContent='center' mt={2}>
                 <Autocomplete
                     open
                     sx={{ maxWidth:800}}
