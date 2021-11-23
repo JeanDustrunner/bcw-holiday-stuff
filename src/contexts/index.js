@@ -1,6 +1,7 @@
-import LocaleContext, {LOCALE_CONTEXT_DEFAULT} from "./localeContext";
+import LocaleContext, {LOCALE_CONTEXT_DEFAULT, LocaleContextProvider} from "./localeContext";
 
 export {
     LocaleContext,
-    LOCALE_CONTEXT_DEFAULT
+    LOCALE_CONTEXT_DEFAULT,
+    LocaleContextProvider
 }

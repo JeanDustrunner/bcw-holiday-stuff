@@ -16,7 +16,8 @@ const Header = () => {
   // Set locale and reload to update context
   const changeLocale = (event) => {
     setLocale(event.target.value);
-    window.location = window.location;
+    // window.location = window.location;
+    // window.location.reload();
   }
 
   const home = () => {

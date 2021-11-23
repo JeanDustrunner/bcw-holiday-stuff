@@ -4,7 +4,7 @@ import { ROUTES } from './configs';
 import './App.css';
 import { LocalizationProvider } from '@mui/lab';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
-import { LocaleContext, LOCALE_CONTEXT_DEFAULT } from './contexts';
+import { LocaleContext, LOCALE_CONTEXT_DEFAULT,LocaleContextProvider  } from './contexts';
 
 
 
@@ -30,7 +30,7 @@ const orientationChange = () => {
 
 
   return (
-    <LocaleContext.Provider value={{ ...LOCALE_CONTEXT_DEFAULT}}>
+    <LocaleContextProvider>
       <LocalizationProvider dateAdapter={AdapterDateFns} locale={locale}>
         <Suspense fallback="loading">
           <BrowserRouter>
@@ -43,7 +43,7 @@ const orientationChange = () => {
           </BrowserRouter>
         </Suspense>
       </LocalizationProvider>
-    </LocaleContext.Provider>
+    </LocaleContextProvider>
   );
 }
 
